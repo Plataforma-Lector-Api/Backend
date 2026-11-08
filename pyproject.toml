@@ -1,0 +1,20 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S", "BLE", "RUF", "ARG"]
+ignore = [
+    "B008",   # FastAPI usa Depends/Query/File en los defaults
+    "S101",   # asserts permitidos en tests
+    "S110",   # try/except/pass en limpieza de GridFS
+    "BLE001", # captura amplia intencional en limpieza de archivos
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/scripts/seed.py" = ["S311", "S108", "ARG001"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

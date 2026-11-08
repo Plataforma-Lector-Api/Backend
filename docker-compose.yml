@@ -1,0 +1,34 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: lector-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: lector-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      ENV: production
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: lector_plus
+      JWT_SECRET: cambia-este-secreto-en-produccion
+      CORS_ORIGINS: http://localhost:5173
+      RATE_LIMIT_ENABLED: "true"
+
+volumes:
+  mongo_data:
