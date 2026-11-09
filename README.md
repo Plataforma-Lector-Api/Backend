@@ -282,6 +282,16 @@ La documentación completa e interactiva está en `/docs`.
 
 ---
 
+## Flujo de trabajo Git
+
+- `main`: versión estable / producción.
+- `feature/*`: nuevas funcionalidades.
+- `docs/*`: documentación y entregables.
+- Commits con Conventional Commits (`feat:`, `fix:`, `docs:`).
+- Cada entrega se cierra con un Pull Request y un tag (`entrega-2`).
+
+---
+
 ## Licencia
 
 MIT.
