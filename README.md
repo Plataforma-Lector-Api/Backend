@@ -4,6 +4,18 @@ API REST para una plataforma de lectura digital construida con **FastAPI + Mongo
 
 > Repositorio backend del proyecto **Plataforma Lector API**. El frontend vive en un repositorio separado (`Frontend`).
 
+## Demo en vivo
+
+| Servicio | URL |
+|---|---|
+| API | <https://lector-api-k2ak.onrender.com> |
+| Swagger UI | <https://lector-api-k2ak.onrender.com/docs> |
+| Frontend | <https://frontend-nine-nu-92.vercel.app> |
+
+Credenciales de demostración: `admin@lector.com` / `Admin123!` (admin) y `lector@lector.com` / `Lector123!` (lector).
+
+> El backend corre en el plan free de Render: se suspende tras 15 minutos sin tráfico y la primera petición puede tardar ~50 s.
+
 ---
 
 ## Stack
@@ -190,7 +202,7 @@ Vercel (React)  ──HTTPS──▶  Render (FastAPI)  ──TLS──▶  Mong
 2. **New → Blueprint** y selecciona el repositorio `Plataforma-Lector-Api/Backend` (usa `render.yaml`).
 3. Configura las variables:
    - `MONGO_URI`: cadena de Atlas.
-   - `CORS_ORIGINS`: URL de Vercel, por ejemplo `https://lector-plus.vercel.app`.
+   - `CORS_ORIGINS`: URL de Vercel, por ejemplo `https://frontend-nine-nu-92.vercel.app`.
    - `JWT_SECRET`: se genera automáticamente con el Blueprint.
 4. Tras el primer despliegue, ejecuta el seed desde la consola de Render:
 
@@ -198,7 +210,7 @@ Vercel (React)  ──HTTPS──▶  Render (FastAPI)  ──TLS──▶  Mong
    python -m app.scripts.seed
    ```
 
-5. Verifica `https://TU-SERVICIO.onrender.com/health` y `/docs`.
+5. Verifica `https://lector-api-k2ak.onrender.com/health` y `/docs`.
 
 > El plan free de Render suspende el servicio tras 15 minutos sin tráfico. La primera petición puede tardar ~50 s. Puedes usar UptimeRobot para mantenerlo activo.
 
@@ -206,7 +218,7 @@ Vercel (React)  ──HTTPS──▶  Render (FastAPI)  ──TLS──▶  Mong
 
 1. Crea una cuenta en <https://vercel.com> y conecta GitHub.
 2. **Add New → Project** y selecciona `Plataforma-Lector-Api/Frontend`.
-3. Variable de entorno: `VITE_API_URL=https://TU-SERVICIO.onrender.com/api/v1`.
+3. Variable de entorno: `VITE_API_URL=https://lector-api-k2ak.onrender.com/api/v1`.
 4. Deploy. Después actualiza `CORS_ORIGINS` en Render con la URL final de Vercel.
 
 ---
