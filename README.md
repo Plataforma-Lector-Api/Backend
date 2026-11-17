@@ -16,6 +16,13 @@ Credenciales de demostración: `admin@lector.com` / `Admin123!` (admin) y `lecto
 
 > El backend corre en el plan free de Render: se suspende tras 15 minutos sin tráfico y la primera petición puede tardar ~50 s.
 
+## Documentación de la Entrega 2
+
+- Informe final: [`docs/entrega-2/Grupo17-plataforma-lector-api.pdf`](docs/entrega-2/Grupo17-plataforma-lector-api.pdf)
+- Presentación: [`docs/entrega-2/Grupo17-plataforma-lector-api-entrega2.pptx`](docs/entrega-2/Grupo17-plataforma-lector-api-entrega2.pptx)
+- Fuente del informe: [`docs/entrega-2/INFORME_ENTREGA_2.md`](docs/entrega-2/INFORME_ENTREGA_2.md)
+- Documento de la Etapa 1: [`docs/entrega-1/Grupo17-plataforma-lector-api-etapa1.pdf`](docs/entrega-1/Grupo17-plataforma-lector-api-etapa1.pdf)
+
 ---
 
 ## Stack
@@ -288,7 +295,7 @@ La documentación completa e interactiva está en `/docs`.
 - `feature/*`: nuevas funcionalidades.
 - `docs/*`: documentación y entregables.
 - Commits con Conventional Commits (`feat:`, `fix:`, `docs:`).
-- Cada entrega se cierra con un Pull Request y un tag (`entrega-2`).
+- Cada entrega se cierra con un Pull Request y un tag (`entrega-2` para el código y `entrega-2-final` para los entregables).
 
 ---
 
