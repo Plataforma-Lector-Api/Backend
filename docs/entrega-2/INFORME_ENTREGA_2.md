@@ -44,13 +44,13 @@ Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend intera
 
 **Backend.** Se reemplazó Flask por FastAPI. La razón principal es que FastAPI genera el esquema OpenAPI 3.1 a partir de los tipos de Pydantic v2, lo que convierte la documentación en un artefacto verificable y no en un anexo desactualizado. Además, el servidor es asíncrono de forma nativa, lo que permite ejecutar las diez métricas del dashboard en paralelo con `asyncio.gather` y mantener el driver `AsyncMongoClient` sin bloquear el event loop.
 
-**Frontend.** Se reemplazó JavaScript vanilla por React 19 con TypeScript y Vite. La interfaz final tiene diez pantallas —inicio, catálogo, detalle, login, registro, biblioteca, lector, dashboard, contenidos y consultas— y un visor de PDF basado en `react-pdf`. Un DOM manipulado a mano no era sostenible para ese alcance ni para el manejo de sesión, caché de consultas y estados de error.
+**Frontend.** Se reemplazó JavaScript vanilla por React 19 con TypeScript y Vite. La interfaz final tiene nueve pantallas —inicio, catálogo, detalle, login, registro, biblioteca, lector, dashboard y contenidos— y un visor de PDF basado en `react-pdf`. Un DOM manipulado a mano no era sostenible para ese alcance ni para el manejo de sesión, caché de consultas y estados de error.
 
 **Biblioteca personal.** La propuesta pedía embeber un arreglo `coleccion` dentro de `users` y actualizarlo con `$push`. Se optó por una colección `collections` con documentos `{user_id, content_id, added_at}` y un índice único compuesto. El arreglo embebido tiene tres defectos para este caso: crece sin límite y acerca el documento al límite de 16 MB; no permite paginar ni ordenar la biblioteca con un índice; y no puede garantizar unicidad de forma atómica sin leer y reescribir el arreglo. La colección independiente resuelve los tres problemas, permite `$lookup` para traer los contenidos y conserva la operación atómica a nivel de documento. Las **etiquetas sí se mantienen embebidas**, como proponía la Etapa 2, porque son un conjunto acotado (máximo 10) y se consultan con un índice multikey.
 
 **Seguridad.** La propuesta usaba el hash de Werkzeug y un único JWT. La implementación usa Argon2 con `pwdlib`, un access token de 60 minutos y un refresh token de 7 días con rotación, revocación y almacenamiento del hash SHA-256 en una colección con índice TTL. Un solo token de larga duración no permite cerrar sesión de forma efectiva ni limitar el daño de una filtración.
 
-**Alcance funcional.** Se agregaron reseñas con recálculo de promedio, progreso de lectura por usuario, recomendaciones por afinidad de etiquetas, PDFs reales en GridFS, dashboard administrativo y un catálogo de consultas ejecutable desde Swagger y desde el frontend. Estas capacidades no estaban en la propuesta, pero son las que permiten demostrar el uso de agregaciones, índices y `$lookup` que la rúbrica de la etapa exige.
+**Alcance funcional.** Se agregaron reseñas con recálculo de promedio, progreso de lectura por usuario, recomendaciones por afinidad de etiquetas, PDFs reales en GridFS, dashboard administrativo y un catálogo de consultas ejecutable desde Swagger. Estas capacidades no estaban en la propuesta, pero son las que permiten demostrar el uso de agregaciones, índices y `$lookup` que la rúbrica de la etapa exige.
 
 **Operación.** Se agregaron 26 pruebas automatizadas, un script de seed reproducible, índices idempotentes al arranque, manejo uniforme de errores con `request_id`, rate limiting en login y validación de PDFs por extensión, firma y tamaño.
 
@@ -59,7 +59,7 @@ Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend intera
 | Elemento | Propuesta Etapa 2 | Implementación entregada | Motivo del cambio |
 |---|---|---|---|
 | Framework backend | Flask | FastAPI + Pydantic v2 | OpenAPI automático, tipado y async nativo |
-| Frontend | HTML, CSS y JS vanilla | React 19 + TypeScript + Vite | Diez pantallas, sesión, caché y visor PDF |
+| Frontend | HTML, CSS y JS vanilla | React 19 + TypeScript + Vite | Nueve pantallas, sesión, caché y visor PDF |
 | Driver de datos | PyMongo síncrono | PyMongo Async | No bloquear el event loop |
 | Hash de contraseñas | Werkzeug | Argon2 (`pwdlib`) | Algoritmo recomendado y con parámetros actualizables |
 | Sesión | Un JWT | Access 60 min + refresh 7 días con rotación | Revocación y menor exposición |
@@ -78,7 +78,7 @@ Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend intera
 | Pruebas | No definidas | 26 pruebas (7 de integración, 19 unitarias) | Verificación reproducible |
 | Despliegue | Render | Atlas M0 + Render + Vercel | Separación de datos, API y frontend |
 | Git | Ramas y commits | `main`, ramas `docs/*`, etiquetas `entrega-2` y `entrega-2-final` | Historial verificable |
-| Pantallas | 3 mínimas | 10 pantallas funcionales | Cubrir todos los casos de uso |
+| Pantallas | 3 mínimas | 9 pantallas funcionales | Cubrir todos los casos de uso |
 
 *Tabla 2 — Matriz de actualización entre la propuesta de la Etapa 2 y la implementación.*
 
@@ -1106,7 +1106,7 @@ Para autenticarse en Swagger se ejecuta `POST /api/v1/auth/login`, se copia el `
 
 # 8. Funcionalidades implementadas
 
-La interfaz final tiene diez pantallas y cubre los cinco casos de uso de la Etapa 1. Las capturas de las figuras 9 y 10 se tomaron de la aplicación desplegada el 9 de noviembre de 2026.
+La interfaz final tiene nueve pantallas y cubre los cinco casos de uso de la Etapa 1. Las capturas de las figuras 9 y 10 se tomaron de la aplicación desplegada el 9 de noviembre de 2026.
 
 ## 8.1 Catálogo, búsqueda y detalle
 
@@ -1130,7 +1130,7 @@ El dashboard reúne diez métricas: totales de usuarios, contenidos, guardados y
 
 ## 8.6 Consultas y documentación
 
-La pantalla `/consultas` ejecuta las diez consultas contra la API y muestra el código HTTP, el tiempo y el resultado. Es la misma información que exponen Swagger y `GET /queries`, pero orientada a la demostración. El enlace a Swagger y ReDoc está disponible desde la aplicación y desde el README.
+Las diez consultas se ejecutan y documentan desde Swagger UI y `GET /queries`, que devuelve el catálogo con nombre, endpoint, operadores e índice de cada una. La aplicación mantiene los enlaces a Swagger y ReDoc en el pie de página y en el README, de modo que la demostración técnica queda disponible sin exponerla como una sección pública. La antigua pantalla `/consultas` se retiró para que la navegación del lector se concentre en el catálogo, la biblioteca y el perfil.
 
 ## 8.7 Pantallas y capturas
 
@@ -1145,13 +1145,12 @@ La pantalla `/consultas` ejecuta las diez consultas contra la API y muestra el c
 | Lector | `/leer/:id` | CU01, CU02 | RF01, RF02 |
 | Dashboard | `/admin` | CU04, CU05 | RF03, RF04 |
 | Contenidos | `/admin/contenidos` | CU05 | RF04 |
-| Consultas | `/consultas` | Q1–Q10 | RF01 |
 
 *Tabla 52 — Pantallas implementadas y su cobertura.*
 
 ![Figura 9 — Interfaz pública: inicio, catálogo, detalle y login](figuras/09-galeria-publica.png)
 
-![Figura 10 — Biblioteca, lector de PDF, dashboard y consultas](figuras/10-galeria-lector-admin.png)
+![Figura 10 — Biblioteca, lector de PDF y panel administrativo](figuras/10-galeria-lector-admin.png)
 
 Las capturas muestran 8 usuarios y 43 reseñas porque se tomaron antes de las últimas pruebas. Al cierre de este informe la base registra **9 usuarios y 44 reseñas**; la diferencia proviene de cuentas y reseñas creadas para verificar los flujos y no altera ninguna consulta.
 
