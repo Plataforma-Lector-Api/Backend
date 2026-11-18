@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.deps import get_current_user, user_id_of
 from app.core.database import get_db
+from app.core.exceptions import AppError
 from app.repositories.users import UserRepository
 from app.schemas.progress import ProgressPublic, ProgressUpdate
-from app.schemas.user import UserPublic, UserUpdate
+from app.schemas.user import UserProfilePublic, UserPublic, UserUpdate
 from app.services.progress import ProgressService
 from app.utils.serializers import serialize_doc
 
@@ -78,3 +79,19 @@ async def upsert_progress(
         content_id=content_id,
         data=payload,
     )
+
+
+@router.get(
+    "/{user_id}",
+    response_model=UserProfilePublic,
+    summary="Ver el perfil público de un usuario",
+    description=(
+        "Devuelve solo el nombre, avatar, biografía y fecha de registro. "
+        "No expone correo, estado de la cuenta ni actividad de lectura."
+    ),
+)
+async def get_user_profile(user_id: str, db=Depends(get_db)):
+    user = await UserRepository(db).find_by_id(user_id)
+    if user is None or user.get("status") != "active":
+        raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
+    return serialize_doc(user)

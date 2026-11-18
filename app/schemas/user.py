@@ -18,6 +18,14 @@ class UserPublic(BaseModel):
     last_login_at: datetime | None = None
 
 
+class UserProfilePublic(BaseModel):
+    id: str
+    name: str
+    avatar_url: str | None = None
+    bio: str | None = None
+    created_at: datetime | None = None
+
+
 class UserUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=100)
     avatar_url: str | None = Field(default=None, max_length=500)
