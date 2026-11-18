@@ -4,7 +4,7 @@ Lector+ es una plataforma web para descubrir, guardar, reseñar y leer libros, a
 
 El cambio de base de datos no fue una sustitución de motor, sino una transformación del modelo y de las consultas. Las cinco tablas relacionales se convirtieron en siete colecciones documentales; la tabla de etiquetas desapareció porque se embeben en el contenido, y la biblioteca personal se mantuvo independiente para evitar arreglos sin límite y conservar unicidad y paginación. Las 13 sentencias SQL se conservan en el anexo A y se transformaron en operaciones `find`, `insert_one`, `update_one`, `delete_one` y pipelines de agregación. Las 10 consultas cubren búsqueda full-text, filtros combinados, rankings, estadísticas, biblioteca, recomendaciones y dashboard.
 
-La API expone **39 operaciones REST sobre 30 rutas**, documentadas automáticamente con OpenAPI 3.1 en Swagger UI y ReDoc. La documentación cubre los siete aspectos solicitados: introducción, endpoints, autenticación y autorización, errores, ejemplos, límites y cuotas, y seguridad. El sistema se verificó en producción con 9 usuarios, 26 contenidos, 37 guardados y 44 reseñas; las 10 consultas responden HTTP 200 y la suite pasa 26 pruebas en 2,43 s.
+La API expone **40 operaciones REST sobre 31 rutas**, documentadas automáticamente con OpenAPI 3.1 en Swagger UI y ReDoc. La documentación cubre los siete aspectos solicitados: introducción, endpoints, autenticación y autorización, errores, ejemplos, límites y cuotas, y seguridad. El sistema se verificó en producción con 9 usuarios, 26 contenidos, 37 guardados y 44 reseñas; las 10 consultas responden HTTP 200 y la suite pasa 26 pruebas en 2,43 s.
 
 La Entrega 2 no reemplaza el informe anterior: lo actualiza. Los requerimientos, casos de uso, prototipos, MER, modelo relacional, diccionario, índices y las 13 consultas SQL se mantienen y se vinculan con la implementación mediante matrices de trazabilidad.
 
@@ -38,13 +38,13 @@ Los identificadores `RF`, `RNF`, `CU` y `SQL` provienen de la Etapa 1 y se conse
 
 La definición de la Etapa 2 propuso migrar desde MySQL hacia MongoDB, mantener Flask y JavaScript vanilla, reemplazar la biblioteca relacional por un arreglo embebido en el documento del usuario, usar `$push` y `$inc` para guardar contenidos, proteger las rutas con JWT y desplegar el backend en Render. También fijó cinco requerimientos funcionales, tres pantallas mínimas y cinco endpoints principales.
 
-Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend interactivo— pero subestimaba tres problemas que aparecieron al implementar: el arreglo embebido de biblioteca crece sin límite y no se puede paginar con índices; el frontend requería más de tres pantallas para cubrir reseñas, progreso y administración; y la documentación de una API de 39 operaciones no se podía mantener a mano. La implementación resolvió esos problemas con decisiones explícitas que se detallan a continuación.
+Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend interactivo— pero subestimaba tres problemas que aparecieron al implementar: el arreglo embebido de biblioteca crece sin límite y no se puede paginar con índices; el frontend requería más de tres pantallas para cubrir reseñas, progreso y administración; y la documentación de una API de 40 operaciones no se podía mantener a mano. La implementación resolvió esos problemas con decisiones explícitas que se detallan a continuación.
 
 ## 2.2 Cambios realizados y su justificación
 
 **Backend.** Se reemplazó Flask por FastAPI. La razón principal es que FastAPI genera el esquema OpenAPI 3.1 a partir de los tipos de Pydantic v2, lo que convierte la documentación en un artefacto verificable y no en un anexo desactualizado. Además, el servidor es asíncrono de forma nativa, lo que permite ejecutar las diez métricas del dashboard en paralelo con `asyncio.gather` y mantener el driver `AsyncMongoClient` sin bloquear el event loop.
 
-**Frontend.** Se reemplazó JavaScript vanilla por React 19 con TypeScript y Vite. La interfaz final tiene nueve pantallas —inicio, catálogo, detalle, login, registro, biblioteca, lector, dashboard y contenidos— y un visor de PDF basado en `react-pdf`. Un DOM manipulado a mano no era sostenible para ese alcance ni para el manejo de sesión, caché de consultas y estados de error.
+**Frontend.** Se reemplazó JavaScript vanilla por React 19 con TypeScript y Vite. La interfaz final tiene diez pantallas —inicio, catálogo, detalle, login, registro, biblioteca, lector, perfil público, dashboard y contenidos— y un visor de PDF basado en `react-pdf`. Un DOM manipulado a mano no era sostenible para ese alcance ni para el manejo de sesión, caché de consultas y estados de error.
 
 **Biblioteca personal.** La propuesta pedía embeber un arreglo `coleccion` dentro de `users` y actualizarlo con `$push`. Se optó por una colección `collections` con documentos `{user_id, content_id, added_at}` y un índice único compuesto. El arreglo embebido tiene tres defectos para este caso: crece sin límite y acerca el documento al límite de 16 MB; no permite paginar ni ordenar la biblioteca con un índice; y no puede garantizar unicidad de forma atómica sin leer y reescribir el arreglo. La colección independiente resuelve los tres problemas, permite `$lookup` para traer los contenidos y conserva la operación atómica a nivel de documento. Las **etiquetas sí se mantienen embebidas**, como proponía la Etapa 2, porque son un conjunto acotado (máximo 10) y se consultan con un índice multikey.
 
@@ -59,7 +59,7 @@ Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend intera
 | Elemento | Propuesta Etapa 2 | Implementación entregada | Motivo del cambio |
 |---|---|---|---|
 | Framework backend | Flask | FastAPI + Pydantic v2 | OpenAPI automático, tipado y async nativo |
-| Frontend | HTML, CSS y JS vanilla | React 19 + TypeScript + Vite | Nueve pantallas, sesión, caché y visor PDF |
+| Frontend | HTML, CSS y JS vanilla | React 19 + TypeScript + Vite | Diez pantallas, sesión, caché y visor PDF |
 | Driver de datos | PyMongo síncrono | PyMongo Async | No bloquear el event loop |
 | Hash de contraseñas | Werkzeug | Argon2 (`pwdlib`) | Algoritmo recomendado y con parámetros actualizables |
 | Sesión | Un JWT | Access 60 min + refresh 7 días con rotación | Revocación y menor exposición |
@@ -72,13 +72,13 @@ Esa propuesta describía correctamente el destino —NoSQL, JWT, frontend intera
 | Progreso | No definido | Colección `reading_progress` | Continuidad de lectura por usuario |
 | Recomendaciones | No definidas | `$lookup` con pipeline y `$setIntersection` | Personalización con agregaciones |
 | Panel admin | Mantenedor básico | Dashboard + CRUD de contenidos y usuarios | Métricas y operación real |
-| Consultas | 5 endpoints principales | 39 operaciones sobre 30 rutas | Cobertura completa del dominio |
+| Consultas | 5 endpoints principales | 40 operaciones sobre 31 rutas | Cobertura completa del dominio |
 | Errores | 5 códigos HTTP | 21 códigos de error uniformes | Diagnóstico y trazabilidad |
 | Documentación | Tabla manual | OpenAPI 3.1 + Swagger + ReDoc | La documentación se genera del código |
 | Pruebas | No definidas | 26 pruebas (7 de integración, 19 unitarias) | Verificación reproducible |
 | Despliegue | Render | Atlas M0 + Render + Vercel | Separación de datos, API y frontend |
 | Git | Ramas y commits | `main`, ramas `docs/*`, etiquetas `entrega-2` y `entrega-2-final` | Historial verificable |
-| Pantallas | 3 mínimas | 9 pantallas funcionales | Cubrir todos los casos de uso |
+| Pantallas | 3 mínimas | 10 pantallas funcionales | Cubrir todos los casos de uso |
 
 *Tabla 2 — Matriz de actualización entre la propuesta de la Etapa 2 y la implementación.*
 
@@ -455,7 +455,7 @@ El flujo de una petición es `endpoint → service → repository → MongoDB`. 
 | `app/core/` | Configuración, base de datos, seguridad, errores y rate limiting |
 | `app/scripts/` | `indexes.py` y `seed.py` |
 | `tests/` | 26 pruebas unitarias y de integración |
-| `docs/` | Informes, figuras y capturas de las dos etapas |
+| `docs/` | Informes y figuras de las dos etapas |
 | `render.yaml` | Infraestructura de despliegue en Render |
 | `docker-compose.yml` | MongoDB y API para desarrollo local |
 
@@ -830,7 +830,7 @@ El contrato se genera desde el código: los modelos Pydantic definen los esquema
 
 ## 7.2 Endpoints
 
-La API tiene **39 operaciones sobre 30 rutas**: 23 `GET`, 8 `POST`, 3 `PATCH`, 1 `PUT` y 4 `DELETE`. La columna «Auth» indica el mecanismo requerido y «Rol» el rol mínimo.
+La API tiene **40 operaciones sobre 31 rutas**: 24 `GET`, 8 `POST`, 3 `PATCH`, 1 `PUT` y 4 `DELETE`. La columna «Auth» indica el mecanismo requerido y «Rol» el rol mínimo.
 
 | Método | Ruta | Auth | Rol | Descripción |
 |---|---|---|---|---|
@@ -1078,7 +1078,7 @@ FastAPI genera el contrato **OpenAPI 3.1** a partir de los tipos de Pydantic v2 
 | Información general | `FastAPI(title, version, description)` | Lector+ API 1.0.0; descripción con credenciales semilla y referencia a las 10 consultas |
 | Etiquetas | `openapi_tags` | Diez grupos: Auth, Users, Contents, Collections, Reviews, Stats, Admin, Files, Consultas MongoDB y Health |
 | Seguridad | `HTTPBearer` | Esquema de portador JWT y botón **Authorize** en Swagger |
-| Operaciones | Decoradores de ruta | 39 operaciones con resumen, descripción y etiquetas |
+| Operaciones | Decoradores de ruta | 40 operaciones con resumen, descripción y etiquetas |
 | Parámetros | `Query` y `Path` | Tipo, obligatoriedad, valores por defecto y límites (`ge`, `le`) |
 | Cuerpos | Modelos Pydantic | Esquema de entrada, campos obligatorios y restricciones |
 | Respuestas | `response_model` | Esquema de éxito y códigos 200/201; errores 400/401/403/404/409/413/422/429/500 |
@@ -1090,7 +1090,7 @@ FastAPI genera el contrato **OpenAPI 3.1** a partir de los tipos de Pydantic v2 
 | Etiqueta | Operaciones | Contenido |
 |---|---|---|
 | Auth | 5 | Registro, login, refresh, logout y usuario autenticado |
-| Users | 5 | Perfil y progreso de lectura |
+| Users | 6 | Perfil público, perfil propio y progreso de lectura |
 | Contents | 9 | Catálogo, búsqueda, rankings y CRUD |
 | Files | 4 | Descarga, carga, borrado y metadatos de PDFs |
 | Collections | 4 | Biblioteca personal y recomendaciones |
@@ -1106,7 +1106,7 @@ Para autenticarse en Swagger se ejecuta `POST /api/v1/auth/login`, se copia el `
 
 # 8. Funcionalidades implementadas
 
-La interfaz final tiene nueve pantallas y cubre los cinco casos de uso de la Etapa 1. Las capturas de las figuras 9 y 10 se tomaron de la aplicación desplegada el 9 de noviembre de 2026.
+La interfaz final tiene diez pantallas y cubre los cinco casos de uso de la Etapa 1.
 
 ## 8.1 Catálogo, búsqueda y detalle
 
@@ -1114,7 +1114,7 @@ La página de inicio muestra contenidos populares, etiquetas y estadísticas. El
 
 ## 8.2 Autenticación y sesión
 
-El registro crea una cuenta con rol `reader`. El login devuelve access y refresh token; el frontend persiste la sesión, adjunta el access token a las peticiones y renueva el par cuando expira. Las rutas privadas redirigen al login y el panel administrativo exige rol `admin`.
+El registro crea una cuenta con rol `reader`. El login devuelve access y refresh token; el frontend persiste la sesión, adjunta el access token a las peticiones y renueva el par cuando expira. Las rutas privadas redirigen al login y el panel administrativo exige rol `admin`. El perfil propio es editable; el perfil de otro usuario se muestra en modo lectura con nombre, avatar, biografía y fecha de registro, sin correo ni actividad de lectura.
 
 ## 8.3 Biblioteca y recomendaciones
 
@@ -1132,7 +1132,7 @@ El dashboard reúne diez métricas: totales de usuarios, contenidos, guardados y
 
 Las diez consultas se ejecutan y documentan desde Swagger UI y `GET /queries`, que devuelve el catálogo con nombre, endpoint, operadores e índice de cada una. La aplicación mantiene los enlaces a Swagger y ReDoc en el pie de página y en el README, de modo que la demostración técnica queda disponible sin exponerla como una sección pública. La antigua pantalla `/consultas` se retiró para que la navegación del lector se concentre en el catálogo, la biblioteca y el perfil.
 
-## 8.7 Pantallas y capturas
+## 8.7 Pantallas implementadas
 
 | Pantalla | Ruta | Caso de uso | Requerimiento |
 |---|---|---|---|
@@ -1141,18 +1141,13 @@ Las diez consultas se ejecutan y documentan desde Swagger UI y `GET /queries`, q
 | Detalle | `/contenidos/:id` | CU01, CU02 | RF01, RF02 |
 | Login | `/login` | CU03 | RF05 |
 | Registro | `/registro` | CU03 | RF05 |
+| Perfil público | `/usuarios/:id` | CU03 | RF05 |
 | Biblioteca | `/biblioteca` | CU02 | RF02 |
 | Lector | `/leer/:id` | CU01, CU02 | RF01, RF02 |
 | Dashboard | `/admin` | CU04, CU05 | RF03, RF04 |
 | Contenidos | `/admin/contenidos` | CU05 | RF04 |
 
 *Tabla 52 — Pantallas implementadas y su cobertura.*
-
-![Figura 9 — Interfaz pública: inicio, catálogo, detalle y login](figuras/09-galeria-publica.png)
-
-![Figura 10 — Biblioteca, lector de PDF y panel administrativo](figuras/10-galeria-lector-admin.png)
-
-Las capturas muestran 8 usuarios y 43 reseñas porque se tomaron antes de las últimas pruebas. Al cierre de este informe la base registra **9 usuarios y 44 reseñas**; la diferencia proviene de cuentas y reseñas creadas para verificar los flujos y no altera ninguna consulta.
 
 # 9. Pruebas y verificación
 
@@ -1230,7 +1225,7 @@ Los tiempos de la tabla 43 corresponden a la misma ejecución. La búsqueda full
 | RNF02 | Argon2 y pruebas de hash y verificación | 7.3, 9.1 |
 | RNF03 | 401 sin token y 403 con rol insuficiente | 7.3, 9.2 |
 | RNF04 | Índices únicos y operaciones atómicas por documento | 5.3, 6.4 |
-| RNF05 | REST/JSON/HTTPS, 39 operaciones y OpenAPI 3.1 | 7.1, 7.8 |
+| RNF05 | REST/JSON/HTTPS, 40 operaciones y OpenAPI 3.1 | 7.1, 7.8 |
 | RNF06 | Usuario obtenido del token; `user_id` nunca en el cuerpo | 7.3, 7.7 |
 
 *Tabla 56 — Trazabilidad entre requerimientos y evidencia.*
@@ -1252,7 +1247,7 @@ Los tiempos de la tabla 43 corresponden a la misma ejecución. La búsqueda full
 
 La Entrega 2 cumplió el cambio de base de datos relacional a NoSQL y lo documentó como una transformación, no como un reemplazo de motor. Las cinco tablas de la Etapa 1 se convirtieron en siete colecciones; la tabla asociativa de etiquetas desapareció porque las etiquetas se embebieron; la biblioteca, las reseñas y el progreso se separaron para evitar arreglos sin límite. Las 13 sentencias SQL se conservan en el anexo A y su equivalente documental se explica en la tabla 42.
 
-La API quedó desplegada y verificable: 39 operaciones sobre 30 rutas, autenticación JWT con access y refresh, autorización por roles, 21 códigos de error uniformes, rate limiting, PDFs en GridFS y documentación OpenAPI 3.1. Las diez consultas cubren búsqueda full-text, filtros combinados, rankings, agregaciones, `$lookup`, recomendaciones y dashboard, y todas responden HTTP 200 en producción.
+La API quedó desplegada y verificable: 40 operaciones sobre 31 rutas, autenticación JWT con access y refresh, autorización por roles, 21 códigos de error uniformes, rate limiting, PDFs en GridFS y documentación OpenAPI 3.1. Las diez consultas cubren búsqueda full-text, filtros combinados, rankings, agregaciones, `$lookup`, recomendaciones y dashboard, y todas responden HTTP 200 en producción.
 
 La verificación fue reproducible: 26 pruebas automatizadas, un smoke test de 46 comprobaciones y mediciones reales de las diez consultas. La búsqueda cumple RNF01 con 721 ms; el dashboard tarda 2,4 s porque ejecuta diez operaciones en paralelo, un costo aceptable para una pantalla administrativa que no está sujeta a ese umbral.
 
@@ -1281,7 +1276,7 @@ Como trabajo futuro se propone: agregar pruebas E2E del frontend, incorporar CI/
 
 # 12. Condición de entrega
 
-El entregable cumple la condición de entrega: se llama **Grupo17-plataforma-lector-api.pdf**, está en `docs/entrega-2/`, se entrega en PDF A4 con portada, índice, numeración de páginas, 59 tablas y 10 figuras rotuladas, y mantiene la estructura incremental de 12 secciones más dos anexos. La fuente editable se entrega en el mismo directorio como `.docx`.
+El entregable cumple la condición de entrega: se llama **Grupo17-plataforma-lector-api.pdf**, está en `docs/entrega-2/`, se entrega en PDF A4 con portada, índice, numeración de páginas, 59 tablas y 8 figuras rotuladas, y mantiene la estructura incremental de 12 secciones más dos anexos. La fuente editable se entrega en el mismo directorio como `.docx`.
 
 | Requisito | Cumplimiento |
 |---|---|
@@ -1290,8 +1285,8 @@ El entregable cumple la condición de entrega: se llama **Grupo17-plataforma-lec
 | Estructura | Resumen ejecutivo, 12 secciones y anexos A y B |
 | Ubicación | `docs/entrega-2/` del repositorio Backend |
 | Fuente editable | `Grupo17-plataforma-lector-api.docx` |
-| Numeración | Páginas, 59 tablas y 10 figuras con rótulo |
-| Integridad | Figuras y capturas incluidas en `docs/entrega-2/figuras/` y `capturas/` |
+| Numeración | Páginas, 59 tablas y 8 figuras con rótulo |
+| Integridad | Figuras incluidas en `docs/entrega-2/figuras/` |
 | Repositorio | https://github.com/Plataforma-Lector-Api/Backend |
 | Demo | https://frontend-nine-nu-92.vercel.app |
 | API | https://lector-api-k2ak.onrender.com |
@@ -1303,8 +1298,7 @@ El entregable cumple la condición de entrega: se llama **Grupo17-plataforma-lec
 |---|---|
 | Informe en PDF | `docs/entrega-2/Grupo17-plataforma-lector-api.pdf` |
 | Informe en DOCX | `docs/entrega-2/Grupo17-plataforma-lector-api.docx` |
-| Figuras | `docs/entrega-2/figuras/` (10 archivos) |
-| Capturas | `docs/entrega-2/capturas/` (10 archivos) |
+| Figuras | `docs/entrega-2/figuras/` (8 archivos) |
 | Backend | https://github.com/Plataforma-Lector-Api/Backend |
 | Frontend | https://github.com/Plataforma-Lector-Api/Frontend |
 | Etiquetas | `entrega-2` (código) y `entrega-2-final` (informe) |
