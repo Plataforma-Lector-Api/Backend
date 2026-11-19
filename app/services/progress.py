@@ -40,6 +40,7 @@ class ProgressService:
             current_page=data.current_page,
             total_pages=data.total_pages,
             percentage=percentage,
+            location=data.location,
         )
         return serialize_doc(document)
 
@@ -58,6 +59,7 @@ class ProgressService:
                     "current_page": document["current_page"],
                     "total_pages": document["total_pages"],
                     "percentage": document["percentage"],
+                    "location": document.get("location"),
                     "updated_at": document["updated_at"],
                     "content": content,
                 }

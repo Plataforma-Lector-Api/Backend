@@ -145,6 +145,7 @@ class ContentService:
                 "rating_avg": 0.0,
                 "rating_count": 0,
                 "file_id": None,
+                "file_type": None,
                 "created_by": to_object_id(user_id),
                 "created_at": now,
                 "updated_at": now,

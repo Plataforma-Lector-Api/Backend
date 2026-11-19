@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 ContentType = Literal["book", "article", "thesis", "magazine", "other"]
 ContentStatus = Literal["draft", "published", "archived"]
+FileType = Literal["pdf", "epub"]
 
 
 class ContentCreate(BaseModel):
@@ -51,6 +52,7 @@ class ContentPublic(BaseModel):
     rating_avg: float = 0
     rating_count: int = 0
     has_file: bool = False
+    file_type: FileType | None = None
     is_saved: bool = False
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -83,5 +85,6 @@ class FileMetadata(BaseModel):
     id: str
     filename: str
     content_type: str
+    file_type: FileType | None = None
     size: int
     upload_date: datetime | None = None

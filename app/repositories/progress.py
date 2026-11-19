@@ -23,22 +23,29 @@ class ProgressRepository:
         current_page: int,
         total_pages: int,
         percentage: float,
+        location: str | None = None,
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
+        update: dict[str, Any] = {
+            "$set": {
+                "current_page": current_page,
+                "total_pages": total_pages,
+                "percentage": round(percentage, 1),
+                "updated_at": now,
+            },
+            "$setOnInsert": {"created_at": now},
+        }
+        if location:
+            update["$set"]["location"] = location
+        else:
+            update["$unset"] = {"location": ""}
+
         result = await self.collection.find_one_and_update(
             {
                 "user_id": to_object_id(user_id),
                 "content_id": to_object_id(content_id),
             },
-            {
-                "$set": {
-                    "current_page": current_page,
-                    "total_pages": total_pages,
-                    "percentage": round(percentage, 1),
-                    "updated_at": now,
-                },
-                "$setOnInsert": {"created_at": now},
-            },
+            update,
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
@@ -83,6 +90,7 @@ class ProgressRepository:
                     "current_page": 1,
                     "total_pages": 1,
                     "percentage": 1,
+                    "location": 1,
                     "updated_at": 1,
                     "content": "$content",
                 }

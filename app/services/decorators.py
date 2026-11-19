@@ -15,6 +15,7 @@ async def decorate_content(
         return None
     item = serialize_doc(document)
     item["has_file"] = item.get("file_id") is not None
+    item["file_type"] = item.get("file_type") or ("pdf" if item["has_file"] else None)
     item["is_saved"] = (
         await collections.exists(user_id, item["id"]) if user_id is not None else False
     )
@@ -31,6 +32,7 @@ async def decorate_many(
     for document in documents:
         item = serialize_doc(document)
         item["has_file"] = item.get("file_id") is not None
+        item["file_type"] = item.get("file_type") or ("pdf" if item["has_file"] else None)
         item["is_saved"] = item["id"] in saved_ids
         result.append(item)
     return result

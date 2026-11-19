@@ -213,7 +213,7 @@ async def get_content(
 @router.post(
     "/{content_id}/file",
     response_model=FileMetadata,
-    summary="Subir o reemplazar el PDF de un contenido (admin)",
+    summary="Subir o reemplazar el archivo (PDF o EPUB) de un contenido (admin)",
     tags=["Contents", "Admin", "Files"],
 )
 async def upload_content_file(
@@ -237,7 +237,7 @@ async def upload_content_file(
 @router.get(
     "/{content_id}/file/metadata",
     response_model=FileMetadata,
-    summary="Metadatos del PDF de un contenido",
+    summary="Metadatos del archivo (PDF o EPUB) de un contenido",
     tags=["Files"],
 )
 async def get_content_file_metadata(
@@ -250,7 +250,7 @@ async def get_content_file_metadata(
 
 @router.get(
     "/{content_id}/file",
-    summary="Descargar o visualizar el PDF de un contenido",
+    summary="Descargar o visualizar el archivo (PDF o EPUB) de un contenido",
     tags=["Files"],
 )
 async def download_content_file(
@@ -280,7 +280,7 @@ async def download_content_file(
 @router.delete(
     "/{content_id}/file",
     response_model=Message,
-    summary="Eliminar el PDF de un contenido (admin)",
+    summary="Eliminar el archivo (PDF o EPUB) de un contenido (admin)",
     tags=["Contents", "Admin", "Files"],
 )
 async def delete_content_file(
@@ -288,5 +288,6 @@ async def delete_content_file(
     user=Depends(require_admin),  # noqa: ARG001
     db=Depends(get_db),
 ):
-    await FileService(db).delete(content_id)
-    return {"message": "PDF eliminado correctamente"}
+    file_type = await FileService(db).delete(content_id)
+    label = "EPUB" if file_type == "epub" else "PDF"
+    return {"message": f"{label} eliminado correctamente"}
